@@ -1,0 +1,28 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# SQLite database
+data/*.db
+backend/*.db
+*.db
+
+# Uploaded PDFs (temporary staging)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Scratch / temp
+scratch/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Environment secrets
+.env
+backend/.env
+*.env

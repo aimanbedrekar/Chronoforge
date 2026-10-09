@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChronoForge — Smart Institutional Bell System</title>
+<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ============================== RIVET BACKDROP ============================== -->
+<div class="plate-texture" aria-hidden="true"></div>
+
+<!-- ============================== TOP BAR ============================== -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 40 40" class="gear-icon" aria-hidden="true">
+        <circle cx="20" cy="20" r="7" fill="none" stroke="currentColor" stroke-width="2.5"/>
+        <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="20" y1="2" x2="20" y2="9"/>
+          <line x1="20" y1="31" x2="20" y2="38"/>
+          <line x1="2" y1="20" x2="9" y2="20"/>
+          <line x1="31" y1="20" x2="38" y2="20"/>
+          <line x1="7.5" y1="7.5" x2="12.5" y2="12.5"/>
+          <line x1="27.5" y1="27.5" x2="32.5" y2="32.5"/>
+          <line x1="32.5" y1="7.5" x2="27.5" y2="12.5"/>
+          <line x1="12.5" y1="27.5" x2="7.5" y2="32.5"/>
+        </g>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <div class="brand-name">CHRONO<span>FORGE</span></div>
+      <div class="brand-sub">Smart Institutional Bell System</div>
+    </div>
+  </div>
+
+  <nav class="main-nav" id="mainNav">
+    <button class="nav-link active" data-view="dashboard" id="navDashboard">Dashboard</button>
+    <button class="nav-link" data-view="timetable">Timetable</button>
+    <button class="nav-link" data-view="bellsystem">Bell System</button>
+    <button class="nav-link" data-view="diagnostics" id="navDiagnostics">🌐 Diagnostics</button>
+    <button class="nav-link" data-view="logs">Activity / Logs</button>
+    <button class="nav-link" data-view="settings">Settings</button>
+    <button class="nav-link nav-admin-link" data-view="admindashboard" id="navAdminDashboard" hidden>⚡ Admin Dashboard</button>
+  </nav>
+
+  <div class="topbar-status">
+    <span class="mock-chip" id="mockChip" hidden>DEV MODE</span>
+    <span class="pill" id="topEspPill"><i class="dot"></i> ESP32 —</span>
+    <div class="user-profile-badge" id="userProfileBadge" hidden>
+      <span class="user-role-tag" id="userRoleTag">USER</span>
+      <span class="user-name-text" id="userNameText">—</span>
+      <button class="btn-logout" id="logoutBtn" title="Log Out">Logout 🚪</button>
+    </div>
+  </div>
+
+  <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<main class="app-main">
+
+  <!-- ============================== AUTHENTICATION VIEW ============================== -->
+  <section class="view active" id="view-auth">
+    <div class="auth-wrapper">
+      <div class="auth-card panel">
+        <div class="auth-header">
+          <div class="auth-logo">
+            <svg viewBox="0 0 40 40" class="gear-icon" aria-hidden="true">
+              <circle cx="20" cy="20" r="7" fill="none" stroke="currentColor" stroke-width="2.5"/>
+              <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="20" y1="2" x2="20" y2="9"/>
+                <line x1="20" y1="31" x2="20" y2="38"/>
+                <line x1="2" y1="20" x2="9" y2="20"/>
+                <line x1="31" y1="20" x2="38" y2="20"/>
+                <line x1="7.5" y1="7.5" x2="12.5" y2="12.5"/>
+                <line x1="27.5" y1="27.5" x2="32.5" y2="32.5"/>
+                <line x1="32.5" y1="7.5" x2="27.5" y2="12.5"/>
+                <line x1="12.5" y1="27.5" x2="7.5" y2="32.5"/>
+              </g>
+            </svg>
+          </div>
+          <h2>CHRONO<span>FORGE</span></h2>
+          <p class="auth-subtitle">Institutional Bell Control Access</p>
+        </div>
+
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="tabLoginBtn" data-authtab="login">Log In</button>
+          <button class="auth-tab" id="tabSignupBtn" data-authtab="signup">Sign Up</button>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <form class="auth-form active" id="loginForm">
+          <label class="field">
+            <span>Username or Email</span>
+            <input type="text" id="loginUsername" placeholder="Enter username or email" required autocomplete="username">
+          </label>
+          <label class="field">
+            <span>Password</span>
+            <input type="password" id="loginPassword" placeholder="Enter password" required autocomplete="current-password">
+          </label>
+          <button type="submit" class="btn btn-primary btn-block" id="loginSubmitBtn">Log In</button>
+        </form>
+
+        <!-- SIGNUP FORM -->
+        <form class="auth-form" id="signupForm" hidden style="display: none;">
+          <label class="field">
+            <span>Username</span>
+            <input type="text" id="signupUsername" placeholder="Choose a username" required autocomplete="username">
+          </label>
+          <label class="field">
+            <span>Email Address</span>
+            <input type="email" id="signupEmail" placeholder="name@institution.edu" required autocomplete="email">
+          </label>
+          <label class="field">
+            <span>Password</span>
+            <input type="password" id="signupPassword" placeholder="Minimum 4 characters" required autocomplete="new-password">
+          </label>
+          <label class="field">
+            <span>Account Type</span>
+            <select id="signupRole">
+              <option value="user" selected>Normal User (Timetable & Bell Controls)</option>
+              <option value="admin">Administrator (Full System & User Control)</option>
+            </select>
+          </label>
+          <button type="submit" class="btn btn-primary btn-block" id="signupSubmitBtn">Create Account & Sign In</button>
+        </form>
+
+        <div class="alert alert-error" id="authErrorAlert" hidden></div>
+        <div class="alert alert-good" id="authSuccessAlert" hidden></div>
+
+        <div class="quick-demo-section">
+          <span class="quick-demo-title">QUICK DEMO ACCOUNTS</span>
+          <div class="quick-demo-buttons">
+            <button class="btn btn-ghost btn-sm" id="demoAdminBtn">⚡ Login as Admin (admin)</button>
+            <button class="btn btn-ghost btn-sm" id="demoUserBtn">👤 Login as User (user)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== DASHBOARD VIEW ============================== -->
+  <section class="view" id="view-dashboard">
+    <div class="view-head">
+      <h1>Dashboard</h1>
+      <p class="view-subhead">Live overview of the bell control system</p>
+    </div>
+
+    <div class="grid grid-status">
+      <!-- System status card -->
+      <div class="panel status-panel">
+        <div class="panel-head">
+          <span class="panel-eyebrow">01 — SYSTEM STATUS</span>
+        </div>
+        <ul class="status-list">
+          <li>
+            <span class="status-label">ESP32</span>
+            <span class="pill" id="statusEsp"><i class="dot"></i> Checking…</span>
+          </li>
+          <li>
+            <span class="status-label">Backend</span>
+            <span class="pill pill-good" id="statusBackend"><i class="dot"></i> Online</span>
+          </li>
+          <li>
+            <span class="status-label">Schedule</span>
+            <span class="pill" id="statusSchedule"><i class="dot"></i> Checking…</span>
+          </li>
+        </ul>
+        <div class="status-meta">
+          <div>
+            <span class="meta-key">Last synchronization</span>
+            <span class="meta-val" id="lastSync">—</span>
+          </div>
+          <div>
+            <span class="meta-key">Timetable version</span>
+            <span class="meta-val" id="scheduleVersion">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live clock -->
+      <div class="panel clock-panel">
+        <div class="panel-head">
+          <span class="panel-eyebrow">02 — CURRENT TIME</span>
+        </div>
+        <div class="clock-display" id="clockTime">--:--:--</div>
+        <div class="clock-date" id="clockDate">—</div>
+        <p class="clock-note">Display only — the ESP32's onboard RTC governs actual bell timing.</p>
+      </div>
+
+      <!-- Next bell -->
+      <div class="panel next-bell-panel">
+        <div class="panel-head">
+          <span class="panel-eyebrow">03 — NEXT BELL</span>
+        </div>
+        <div id="nextBellBody">
+          <div class="next-bell-time" id="nextBellTime">—</div>
+          <div class="next-bell-label" id="nextBellLabel">No schedule loaded</div>
+          <div class="next-bell-countdown" id="nextBellCountdown"></div>
+        </div>
+        <p class="clock-note">Informational only. The website never triggers the bell — the ESP32 does.</p>
+      </div>
+    </div>
+
+    <div class="grid grid-two">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-eyebrow">04 — QUICK ACTIONS</span>
+        </div>
+        <div class="quick-actions">
+          <button class="btn btn-secondary" data-goto="timetable">Upload Timetable</button>
+          <button class="btn btn-secondary" data-goto="bellsystem">Bell System Controls</button>
+          <button class="btn btn-secondary" data-goto="logs">View Activity Log</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-eyebrow">05 — ACTIVE SCHEDULE SUMMARY</span>
+        </div>
+        <div id="dashScheduleSummary" class="schedule-summary">
+          <p class="empty-note">No schedule saved yet. Upload a timetable PDF to begin.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== TIMETABLE VIEW ============================== -->
+  <section class="view" id="view-timetable">
+    <div class="view-head">
+      <h1>Timetable</h1>
+      <p class="view-subhead">Upload, extract, and edit the institution's bell schedule</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-eyebrow">UPLOAD PDF TIMETABLE</span>
+      </div>
+
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept="application/pdf" hidden>
+        <svg viewBox="0 0 48 48" class="dropzone-icon" aria-hidden="true">
+          <path d="M24 6v24m0 0-8-8m8 8 8-8M10 34v4a4 4 0 0 0 4 4h20a4 4 0 0 0 4-4v-4"
+                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p class="dropzone-title">Drag &amp; drop a PDF here</p>
+        <p class="dropzone-sub">or</p>
+        <button class="btn btn-primary" id="browseBtn">Browse File</button>
+        <p class="dropzone-hint">PDF only · Maximum 15 MB</p>
+      </div>
+
+      <div class="file-chip" id="fileChip" hidden>
+        <svg viewBox="0 0 24 24" class="file-icon" aria-hidden="true"><path fill="currentColor" d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" opacity=".2"/><path fill="none" stroke="currentColor" stroke-width="1.6" d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/></svg>
+        <span class="file-chip-name" id="fileChipName">—</span>
+        <span class="file-chip-size" id="fileChipSize">—</span>
+        <button class="chip-remove" id="fileRemoveBtn" aria-label="Remove file">✕</button>
+      </div>
+
+      <div class="upload-progress" id="uploadProgress" hidden>
+        <div class="upload-progress-bar" id="uploadProgressBar"></div>
+      </div>
+
+      <div class="form-row">
+        <button class="btn btn-primary btn-block" id="uploadBtn" disabled>Upload &amp; Extract Timetable</button>
+      </div>
+
+      <div class="alert alert-error" id="uploadError" hidden></div>
+      <div class="alert alert-warning" id="uploadWarning" hidden></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head panel-head-row">
+        <span class="panel-eyebrow">EDITABLE SCHEDULE</span>
+        <div class="validation-badge" id="validationBadge">No schedule loaded</div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="schedule-table" id="scheduleTable">
+          <thead>
+            <tr>
+              <th class="col-period">Period</th>
+              <th class="col-time">Start</th>
+              <th class="col-time">End</th>
+              <th class="col-label">Activity</th>
+              <th class="col-tone">Bell Tone</th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="scheduleTableBody">
+            <tr class="empty-row"><td colspan="6">No timetable loaded yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-actions">
+        <button class="btn btn-ghost" id="addRowBtn">+ Add Row</button>
+        <button class="btn btn-ghost" id="resetBtn">Reset</button>
+        <button class="btn btn-secondary" id="validateBtn">Validate Schedule</button>
+        <button class="btn btn-primary" id="saveScheduleBtn">Save Schedule</button>
+      </div>
+
+      <div class="validation-errors" id="validationErrors" hidden></div>
+    </div>
+
+    <div class="panel dispatch-panel">
+      <div class="panel-head">
+        <span class="panel-eyebrow">DISPATCH TO HARDWARE</span>
+      </div>
+      <p class="dispatch-copy">
+        Sending the schedule transmits it to the ESP32 over the local network. The device stores it
+        permanently and rings the bell on its own — the website does not need to stay open afterward.
+      </p>
+      <button class="btn btn-dispatch" id="sendToEsp32Btn" disabled>SEND TO BELL SYSTEM</button>
+      <div class="alert" id="dispatchResult" hidden></div>
+    </div>
+  </section>
+
+  <!-- ============================== BELL SYSTEM VIEW ============================== -->
+  <section class="view" id="view-bellsystem">
+    <div class="view-head">
+      <h1>Bell System</h1>
+      <p class="view-subhead">Hardware link status, manual test, and schedule history</p>
+    </div>
+
+    <div class="grid grid-two">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-eyebrow">DEVICE LINK</span>
+        </div>
+        <ul class="status-list">
+          <li><span class="status-label">Connection</span><span class="pill" id="bsEspPill"><i class="dot"></i> —</span></li>
+          <li><span class="status-label">IP Address</span><span class="meta-val" id="bsIp">—</span></li>
+          <li><span class="status-label">Firmware</span><span class="meta-val" id="bsFirmware">—</span></li>
+          <li><span class="status-label">Last handshake</span><span class="meta-val" id="bsHandshake">—</span></li>
+        </ul>
+        <button class="btn btn-secondary" id="refreshEspBtn">Refresh Status</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-eyebrow">MANUAL TEST</span>
+        </div>
+        <p class="dispatch-copy">
+          Trigger a short manual ring to confirm the relay and bell wiring are working.
+          This is not required for normal daily operation.
+        </p>
+        <button class="btn btn-secondary" id="testBellBtn" disabled>Test Bell</button>
+        <div class="alert" id="testBellResult" hidden></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-eyebrow">SCHEDULE VERSION HISTORY</span>
+      </div>
+      <div class="table-wrap">
+        <table class="schedule-table" id="historyTable">
+          <thead>
+            <tr>
+              <th>Version</th>
+              <th>Source File</th>
+              <th>Created</th>
+              <th>Dispatched</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody">
+            <tr class="empty-row"><td colspan="5">No schedule history yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== LOGS VIEW ============================== -->
+  <section class="view" id="view-logs">
+    <div class="view-head">
+      <h1>Activity / Logs</h1>
+      <p class="view-subhead">Chronological record of uploads, validations, and dispatches</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head panel-head-row">
+        <span class="panel-eyebrow">EVENT LOG</span>
+        <button class="btn btn-ghost" id="refreshLogsBtn">Refresh</button>
+      </div>
+      <ul class="log-list" id="logList">
+        <li class="empty-note">No activity yet.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================== SETTINGS VIEW ============================== -->
+  <section class="view" id="view-settings">
+    <div class="view-head">
+      <h1>Settings</h1>
+      <p class="view-subhead">Configure how the backend reaches the ESP32</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-eyebrow">ESP32 CONNECTION</span>
+      </div>
+      <form class="settings-form" id="settingsForm">
+        <label class="field">
+          <span>ESP32 IP Address</span>
+          <input type="text" id="cfgHost" placeholder="192.168.1.100">
+        </label>
+        <label class="field">
+          <span>ESP32 Port</span>
+          <input type="text" id="cfgPort" placeholder="80">
+        </label>
+        <label class="field">
+          <span>Connection Timeout (seconds)</span>
+          <input type="number" id="cfgTimeout" min="1" max="30" step="1">
+        </label>
+        <label class="field">
+          <span>Bell Test Duration (seconds)</span>
+          <input type="number" id="cfgBellDuration" min="1" max="10" step="1">
+        </label>
+        <label class="field field-toggle">
+          <span>Development / Mock Mode</span>
+          <input type="checkbox" id="cfgMockMode">
+        </label>
+        <p class="settings-note">
+          Mock mode simulates a connected ESP32 for development. Turn it off once real hardware is on the network.
+        </p>
+        <button type="submit" class="btn btn-primary">Save Settings</button>
+        <div class="alert" id="settingsResult" hidden></div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============================== NETWORK DIAGNOSTICS VIEW ============================== -->
+  <section class="view" id="view-diagnostics">
+    <div class="view-head view-head-row">
+      <div>
+        <h1>Network Diagnostics</h1>
+        <p class="view-subhead">Real-time status monitoring for College Wi-Fi & ESP32 Bell Controller</p>
+      </div>
+      <div class="view-head-actions">
+        <button class="btn btn-primary" id="runDiagPingBtn">⚡ Run Ping Test</button>
+        <button class="btn btn-ghost" id="refreshDiagBtn">↻ Refresh</button>
+      </div>
+    </div>
+
+    <!-- PROMINENT NETWORK HERO STATUS BANNER -->
+    <div class="diag-hero-banner diag-hero-checking" id="diagHeroBanner">
+      <div class="diag-hero-icon" id="diagHeroIcon">⏳</div>
+      <div class="diag-hero-content">
+        <h2 id="diagHeroTitle">CHECKING NETWORK DIAGNOSTICS…</h2>
+        <p id="diagHeroSub">Scanning College Wi-Fi network and ESP32 hardware node reachability</p>
+      </div>
+      <div class="diag-hero-badge">
+        <span class="pill" id="diagHeroPill"><i class="dot"></i> SCANNING</span>
+      </div>
+    </div>
+
+    <!-- DIAGNOSTICS DETAILS GRID -->
+    <div class="grid grid-three">
+
+      <!-- PANEL 1: COLLEGE WI-FI NETWORK -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-eyebrow">COLLEGE WI-FI NETWORK</span>
+        </div>
+        <ul class="status-list">
+          <li>
+            <span class="status-label">Network SSID</span>
+            <span class="meta-val" id="diagWifiSsid">en24270776</span>
+          </li>
+          <li>
+            <span class="status-label">Wi-Fi Password</span>
+            <span class="meta-val" id="diagWifiPass">•••••••••••• <button class="btn-link" id="toggleWifiPassBtn">Show</button></span>
+          </li>
+          <li>
+            <span class="status-label">Wi-Fi Status</span>
+            <span class="pill pill-good" id="diagWifiStatusPill"><i class="dot"></i> Connected</span>
+          </li>
+          <li>
+            <span class="status-label">Server Local IP</span>
+            <span class="meta-val" id="diagLocalIp">—</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- PANEL 2: ESP32 HARDWARE NODE -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-eyebrow">ESP32 HARDWARE NODE</span>
+        </div>
+        <ul class="status-list">
+          <li>
+            <span class="status-label">ESP32 Host IP</span>
+            <span class="meta-val" id="diagEspHost">192.168.1.100</span>
+          </li>
+          <li>
+            <span class="status-label">Port / Protocol</span>
+            <span class="meta-val" id="diagEspPort">80 (HTTP)</span>
+          </li>
+          <li>
+            <span class="status-label">Hardware Reachability</span>
+            <span class="pill" id="diagEspStatusPill"><i class="dot"></i> Checking…</span>
+          </li>
+          <li>
+            <span class="status-label">Ping Latency</span>
+            <span class="meta-val" id="diagLatency">—</span>
+          </li>
+          <li>
+            <span class="status-label">Signal (RSSI)</span>
+            <span class="meta-val" id="diagRssi">—</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- PANEL 3: HARDWARE DIAGNOSTICS & FIRMWARE -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-eyebrow">HARDWARE NODE INFO</span>
+        </div>
+        <ul class="status-list">
+          <li>
+            <span class="status-label">Device Type</span>
+            <span class="meta-val" id="diagDeviceName">ESP32 Dev Module</span>
+          </li>
+          <li>
+            <span class="status-label">Firmware</span>
+            <span class="meta-val" id="diagFirmware">v1.0.0</span>
+          </li>
+          <li>
+            <span class="status-label">DS3231 RTC Clock</span>
+            <span class="pill pill-good" id="diagRtcPill"><i class="dot"></i> Active</span>
+          </li>
+          <li>
+            <span class="status-label">Last Ping Time</span>
+            <span class="meta-val" id="diagLastPing">—</span>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- TROUBLESHOOTING HINTS & DIAGNOSTIC LOG -->
+    <div class="grid grid-two">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-eyebrow">DIAGNOSTIC TROUBLESHOOTING GUIDANCE</span>
+        </div>
+        <div class="troubleshoot-box" id="troubleshootBox">
+          <p class="empty-note">Scanning diagnostics for recommendations…</p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head panel-head-row">
+          <span class="panel-eyebrow">AUTOMATED MONITORING</span>
+        </div>
+        <div class="admin-action-list">
+          <div class="admin-action-item">
+            <div>
+              <strong>Auto-Scan Interval (5s)</strong>
+              <p class="settings-note">Automatically scan Wi-Fi and ESP32 connectivity every 5 seconds</p>
+            </div>
+            <label class="field-toggle inline-toggle">
+              <input type="checkbox" id="autoScanToggle" checked>
+            </label>
+          </div>
+          <div class="admin-action-item">
+            <div>
+              <strong>Mock Mode Override</strong>
+              <p class="settings-note">Simulate connected ESP32 node for offline testing</p>
+            </div>
+            <label class="field-toggle inline-toggle">
+              <input type="checkbox" id="diagMockToggle">
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== ADMIN DASHBOARD VIEW ============================== -->
+  <section class="view" id="view-admindashboard">
+    <div class="view-head view-head-row">
+      <div>
+        <h1>Admin Dashboard</h1>
+        <p class="view-subhead">System analytics, user access management, and hardware controls</p>
+      </div>
+      <div class="view-head-actions">
+        <button class="btn btn-secondary" data-goto="dashboard">⚡ Go to Real Page (Timetable Dashboard)</button>
+        <button class="btn btn-ghost" id="refreshAdminStatsBtn">↻ Refresh Data</button>
+      </div>
+    </div>
+
+    <!-- STATS CARDS GRID -->
+    <div class="grid grid-four">
+      <div class="panel stat-panel">
+        <div class="stat-header">
+          <span class="panel-eyebrow">USERS COMMUNITY</span>
+          <span class="stat-icon">👥</span>
+        </div>
+        <div class="stat-number" id="statTotalUsers">—</div>
+        <div class="stat-details" id="statUsersBreakdown">Admins: — | Normal Users: —</div>
+      </div>
+
+      <div class="panel stat-panel">
+        <div class="stat-header">
+          <span class="panel-eyebrow">SCHEDULE VERSIONS</span>
+          <span class="stat-icon">📅</span>
+        </div>
+        <div class="stat-number" id="statTotalSchedules">—</div>
+        <div class="stat-details" id="statScheduleActive">Active: Version —</div>
+      </div>
+
+      <div class="panel stat-panel">
+        <div class="stat-header">
+          <span class="panel-eyebrow">ESP32 LINK STATUS</span>
+          <span class="stat-icon">⚡</span>
+        </div>
+        <div class="stat-number" id="statEspStatus">MOCK</div>
+        <div class="stat-details" id="statEspTarget">Target: 192.168.1.100:80</div>
+      </div>
+
+      <div class="panel stat-panel">
+        <div class="stat-header">
+          <span class="panel-eyebrow">AUDIT & LOGS</span>
+          <span class="stat-icon">📜</span>
+        </div>
+        <div class="stat-number" id="statTotalLogs">—</div>
+        <div class="stat-details" id="statLogAlerts">Errors / Warnings: —</div>
+      </div>
+    </div>
+
+    <!-- MAIN ADMIN PANELS -->
+    <div class="grid grid-two">
+
+      <!-- USER MANAGEMENT TABLE PANEL -->
+      <div class="panel">
+        <div class="panel-head panel-head-row">
+          <span class="panel-eyebrow">REGISTERED USERS DIRECTORY</span>
+          <button class="btn btn-ghost btn-sm" id="toggleAddUserBtn">+ Register User</button>
+        </div>
+
+        <!-- INLINE ADD USER FORM -->
+        <form class="inline-add-form" id="adminAddUserForm" hidden>
+          <h4>Register New Account</h4>
+          <div class="form-grid-three">
+            <input type="text" id="adminNewUsername" placeholder="Username" required>
+            <input type="email" id="adminNewEmail" placeholder="Email (optional)">
+            <input type="password" id="adminNewPassword" placeholder="Password" required>
+          </div>
+          <div class="form-row-flex">
+            <select id="adminNewRole">
+              <option value="user" selected>Role: Normal User</option>
+              <option value="admin">Role: Administrator</option>
+            </select>
+            <button type="submit" class="btn btn-primary btn-sm">Create User</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="cancelAddUserBtn">Cancel</button>
+          </div>
+        </form>
+
+        <div class="table-wrap">
+          <table class="schedule-table" id="usersTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Joined</th>
+                <th>Last Login</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <tr class="empty-row"><td colspan="6">Loading users…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SYSTEM CONTROLS & DIAGNOSTICS -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-eyebrow">SYSTEM OPERATIONS & MAINTENANCE</span>
+        </div>
+        
+        <div class="admin-action-list">
+          <div class="admin-action-item">
+            <div>
+              <strong>Hardware Mock Mode</strong>
+              <p class="settings-note">Simulate ESP32 response for testing without physical board</p>
+            </div>
+            <label class="field-toggle inline-toggle">
+              <input type="checkbox" id="adminMockToggle">
+            </label>
+          </div>
+
+          <div class="admin-action-item">
+            <div>
+              <strong>Manual Hardware Relay Test</strong>
+              <p class="settings-note">Trigger a brief bell relay pulse to confirm wiring</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" id="adminTestBellBtn">Test Relay</button>
+          </div>
+
+          <div class="admin-action-item">
+            <div>
+              <strong>Purge Historical Schedules</strong>
+              <p class="settings-note">Delete older schedule archives, retaining only the latest active schedule</p>
+            </div>
+            <button class="btn btn-ghost btn-sm text-warn" id="adminPurgeSchedulesBtn">Purge Archives</button>
+          </div>
+
+          <div class="admin-action-item">
+            <div>
+              <strong>Clear System Logs</strong>
+              <p class="settings-note">Permanently wipe all event audit logs from database</p>
+            </div>
+            <button class="btn btn-ghost btn-sm text-warn" id="adminClearLogsBtn">Clear Logs</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ============================== TEST BELL CONFIRM MODAL ============================== -->
+<div class="modal-backdrop" id="confirmModal" hidden>
+  <div class="modal">
+    <h3 id="confirmModalTitle">Test the bell?</h3>
+    <p id="confirmModalBody">This will briefly activate the relay for a manual test.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="confirmModalCancel">Cancel</button>
+      <button class="btn btn-dispatch" id="confirmModalConfirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
