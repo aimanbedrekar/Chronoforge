@@ -3983,7 +3983,7 @@ async function handleSignup(e) {
   const username = $("#signupUsername").value.trim();
   const email = $("#signupEmail").value.trim();
   const password = $("#signupPassword").value.trim();
-  const role = $("#signupRole").value;
+  const role = "admin"; // MULTI-ADMIN: All registered accounts are Administrators
   hideAlert("#authErrorAlert");
   hideAlert("#authSuccessAlert");
 
@@ -4002,14 +4002,10 @@ async function handleSignup(e) {
       state.authToken = result.data.token;
       localStorage.setItem("cf_auth_token", result.data.token);
       updateUserUI(result.data.user);
-      toast(`Account created! Logged in as ${result.data.user.username}.`, "success");
+      toast(`Administrator account created! Logged in as ${result.data.user.username}.`, "success");
 
-      // REDIRECTION LOGIC: Admin -> Admin Dashboard, Normal User -> Real Page
-      if (result.data.user.role === "admin") {
-        setView("admindashboard");
-      } else {
-        setView("dashboard");
-      }
+      // MULTI-ADMIN REDIRECTION: All admins go to Admin Dashboard
+      setView("admindashboard");
     }
   } catch (error) {
     showAlert("#authErrorAlert", error.message || "Registration failed.");
@@ -4042,7 +4038,7 @@ async function loadAdminStats() {
     if (result.success && result.data && result.data.stats) {
       const s = result.data.stats;
       if ($("#statTotalUsers")) $("#statTotalUsers").textContent = s.total_users;
-      if ($("#statUsersBreakdown")) $("#statUsersBreakdown").textContent = `Admins: ${s.admin_count} | Normal Users: ${s.user_count}`;
+      if ($("#statUsersBreakdown")) $("#statUsersBreakdown").textContent = `Multi-Admin System (${s.total_users} Active Admins)`;
 
       if ($("#statTotalSchedules")) $("#statTotalSchedules").textContent = s.total_schedules;
       if ($("#statScheduleActive")) $("#statScheduleActive").textContent = s.active_version ? `Active: Version ${s.active_version} (${s.active_items_count} rows)` : "No active schedule";
@@ -4070,25 +4066,17 @@ async function loadAdminUsers() {
     if (!body) return;
 
     if (!result.success || !result.data.users || result.data.users.length === 0) {
-      body.innerHTML = '<tr class="empty-row"><td colspan="6">No users found.</td></tr>';
+      body.innerHTML = '<tr class="empty-row"><td colspan="6">No administrators found.</td></tr>';
       return;
     }
 
     body.innerHTML = result.data.users.map(u => {
       const isSelf = (state.currentUser && state.currentUser.id === u.id);
-      const roleBadge = u.role === "admin" 
-        ? '<span class="badge-role-admin">ADMIN</span>' 
-        : '<span class="badge-role-user">USER</span>';
-      
-      const toggleRoleAction = isSelf ? '' : `
-        <button class="btn btn-ghost btn-sm" onclick="toggleUserRole(${u.id}, '${u.role}')">
-          ${u.role === "admin" ? "Demote" : "Promote"}
-        </button>
-      `;
+      const roleBadge = '<span class="badge-role-admin">ADMIN (Full Access)</span>';
 
-      const deleteAction = isSelf ? '<span class="meta-val">(You)</span>' : `
+      const deleteAction = isSelf ? '<span class="meta-val">(Your Account)</span>' : `
         <button class="btn btn-ghost btn-sm text-warn" onclick="deleteUserAccount(${u.id}, '${escapeHtml(u.username)}')">
-          Delete
+          Remove Admin
         </button>
       `;
 
@@ -4100,37 +4088,18 @@ async function loadAdminUsers() {
           <td><small>${fmtTimestamp(u.created_at)}</small></td>
           <td><small>${fmtTimestamp(u.last_login)}</small></td>
           <td>
-            ${toggleRoleAction}
             ${deleteAction}
           </td>
         </tr>
       `;
     }).join("");
   } catch (error) {
-    toast(`Failed to load users: ${error.message}`, "error");
+    toast(`Failed to load administrators: ${error.message}`, "error");
   }
 }
-
-async function toggleUserRole(userId, currentRole) {
-  const newRole = currentRole === "admin" ? "user" : "admin";
-  try {
-    const res = await apiCall(`/admin/users/${userId}/role`, {
-      method: "PUT",
-      body: JSON.stringify({ role: newRole })
-    });
-    if (res.success) {
-      toast(res.message, "success");
-      loadAdminUsers();
-      loadAdminStats();
-    }
-  } catch (err) {
-    toast(err.message, "error");
-  }
-}
-window.toggleUserRole = toggleUserRole;
 
 async function deleteUserAccount(userId, username) {
-  if (!confirm(`Are you sure you want to delete user '${username}'?`)) return;
+  if (!confirm(`Are you sure you want to remove administrator '${username}'?`)) return;
   try {
     const res = await apiCall(`/admin/users/${userId}`, { method: "DELETE" });
     if (res.success) {
@@ -4149,7 +4118,7 @@ async function handleAdminAddUser(e) {
   const username = $("#adminNewUsername").value.trim();
   const email = $("#adminNewEmail").value.trim();
   const password = $("#adminNewPassword").value.trim();
-  const role = $("#adminNewRole").value;
+  const role = "admin"; // MULTI-ADMIN: Always create as Administrator
 
   try {
     const res = await apiCall("/admin/users", {
@@ -4213,20 +4182,11 @@ function setupAuthAndAdminEvents() {
 
   // Quick Demo Account Buttons
   const demoAdmin = $("#demoAdminBtn");
-  const demoUser = $("#demoUserBtn");
 
   if (demoAdmin) {
     demoAdmin.addEventListener("click", () => {
       $("#loginUsername").value = "admin";
       $("#loginPassword").value = "admin123";
-      handleLogin();
-    });
-  }
-
-  if (demoUser) {
-    demoUser.addEventListener("click", () => {
-      $("#loginUsername").value = "user";
-      $("#loginPassword").value = "user123";
       handleLogin();
     });
   }

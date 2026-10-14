@@ -120,24 +120,16 @@
             <span>Password</span>
             <input type="password" id="signupPassword" placeholder="Minimum 4 characters" required autocomplete="new-password">
           </label>
-          <label class="field">
-            <span>Account Type</span>
-            <select id="signupRole">
-              <option value="user" selected>Normal User (Timetable & Bell Controls)</option>
-              <option value="admin">Administrator (Full System & User Control)</option>
-            </select>
-          </label>
-          <button type="submit" class="btn btn-primary btn-block" id="signupSubmitBtn">Create Account & Sign In</button>
+          <button type="submit" class="btn btn-primary btn-block" id="signupSubmitBtn">Create Administrator Account</button>
         </form>
 
         <div class="alert alert-error" id="authErrorAlert" hidden></div>
         <div class="alert alert-good" id="authSuccessAlert" hidden></div>
 
         <div class="quick-demo-section">
-          <span class="quick-demo-title">QUICK DEMO ACCOUNTS</span>
+          <span class="quick-demo-title">QUICK DEMO ACCESS</span>
           <div class="quick-demo-buttons">
-            <button class="btn btn-ghost btn-sm" id="demoAdminBtn">⚡ Login as Admin (admin)</button>
-            <button class="btn btn-ghost btn-sm" id="demoUserBtn">👤 Login as User (user)</button>
+            <button class="btn btn-ghost btn-sm" id="demoAdminBtn">⚡ Login as Admin (admin / admin123)</button>
           </div>
         </div>
       </div>
@@ -601,11 +593,11 @@
     <div class="grid grid-four">
       <div class="panel stat-panel">
         <div class="stat-header">
-          <span class="panel-eyebrow">USERS COMMUNITY</span>
-          <span class="stat-icon">👥</span>
+          <span class="panel-eyebrow">ADMINISTRATORS</span>
+          <span class="stat-icon">🛡️</span>
         </div>
         <div class="stat-number" id="statTotalUsers">—</div>
-        <div class="stat-details" id="statUsersBreakdown">Admins: — | Normal Users: —</div>
+        <div class="stat-details" id="statUsersBreakdown">Multi-Admin Access Active</div>
       </div>
 
       <div class="panel stat-panel">
@@ -642,24 +634,20 @@
       <!-- USER MANAGEMENT TABLE PANEL -->
       <div class="panel">
         <div class="panel-head panel-head-row">
-          <span class="panel-eyebrow">REGISTERED USERS DIRECTORY</span>
-          <button class="btn btn-ghost btn-sm" id="toggleAddUserBtn">+ Register User</button>
+          <span class="panel-eyebrow">ADMINISTRATORS DIRECTORY (MULTI-ADMIN)</span>
+          <button class="btn btn-ghost btn-sm" id="toggleAddUserBtn">+ Add Administrator</button>
         </div>
 
         <!-- INLINE ADD USER FORM -->
         <form class="inline-add-form" id="adminAddUserForm" hidden>
-          <h4>Register New Account</h4>
+          <h4>Register New Administrator</h4>
           <div class="form-grid-three">
-            <input type="text" id="adminNewUsername" placeholder="Username" required>
-            <input type="email" id="adminNewEmail" placeholder="Email (optional)">
-            <input type="password" id="adminNewPassword" placeholder="Password" required>
+            <input type="text" id="adminNewUsername" placeholder="Admin Username" required>
+            <input type="email" id="adminNewEmail" placeholder="Admin Email (optional)">
+            <input type="password" id="adminNewPassword" placeholder="Admin Password" required>
           </div>
           <div class="form-row-flex">
-            <select id="adminNewRole">
-              <option value="user" selected>Role: Normal User</option>
-              <option value="admin">Role: Administrator</option>
-            </select>
-            <button type="submit" class="btn btn-primary btn-sm">Create User</button>
+            <button type="submit" class="btn btn-primary btn-sm">Create Administrator</button>
             <button type="button" class="btn btn-ghost btn-sm" id="cancelAddUserBtn">Cancel</button>
           </div>
         </form>
@@ -669,9 +657,9 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Username</th>
-                <th>Role</th>
-                <th>Joined</th>
+                <th>Administrator</th>
+                <th>Access Level</th>
+                <th>Created</th>
                 <th>Last Login</th>
                 <th>Actions</th>
               </tr>

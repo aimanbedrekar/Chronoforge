@@ -201,20 +201,18 @@ def init_db():
                 )
             )
 
-        # Seed default Admin and User accounts if no users exist
+        # MULTI-ADMIN REQUIREMENT: All users in the system are Administrators
+        cursor.execute("UPDATE users SET role = 'admin' WHERE role != 'admin'")
+
+        # Seed default Primary Admin account if no users exist
         cursor.execute("SELECT COUNT(*) as cnt FROM users")
         if cursor.fetchone()["cnt"] == 0:
             now_str = datetime.now().astimezone().isoformat(timespec="seconds")
             admin_pw = generate_password_hash("admin123")
-            user_pw = generate_password_hash("user123")
             cursor.execute("""
                 INSERT INTO users (username, email, password_hash, role, created_at, last_login)
                 VALUES (?, ?, ?, ?, ?, ?)
             """, ("admin", "admin@chronoforge.com", admin_pw, "admin", now_str, now_str))
-            cursor.execute("""
-                INSERT INTO users (username, email, password_hash, role, created_at, last_login)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, ("user", "user@chronoforge.com", user_pw, "user", now_str, now_str))
 
         conn.commit()
 
@@ -2152,6 +2150,17 @@ def clean_schedule_items(
 
 
 # ============================================================================
+# ESP32 CLOUD SYNC & HEARTBEAT STATE
+# ============================================================================
+
+esp32_live_state = {
+    "last_seen": 0,
+    "device_info": {},
+    "pending_bell_test": False,
+    "pending_bell_tone": "Short Ring"
+}
+
+# ============================================================================
 # ESP32 CLIENT
 # ============================================================================
 
@@ -2216,6 +2225,17 @@ class ESP32Client:
 
                 "last_handshake":
                     now_iso()
+            }
+
+        # Check cloud heartbeat first (when ESP32 is connected over Wi-Fi to Render)
+        now_ts = time.time()
+        if (now_ts - esp32_live_state.get("last_seen", 0)) < 30:
+            dev_info = esp32_live_state.get("device_info", {})
+            return {
+                "connected": True,
+                "ip": dev_info.get("ip_address", self.host),
+                "firmware": dev_info.get("firmware", "ChronoForge ESP32"),
+                "last_handshake": now_iso()
             }
 
         try:
@@ -2301,6 +2321,14 @@ class ESP32Client:
                     len(items)
             }
 
+        now_ts = time.time()
+        if (now_ts - esp32_live_state.get("last_seen", 0)) < 30:
+            return {
+                "success": True,
+                "message": f"Weekly schedule saved ({len(items)} items) and synced for ESP32 via Cloud Wi-Fi.",
+                "rows": len(items)
+            }
+
         self.refresh()
 
         url = (
@@ -2364,6 +2392,15 @@ class ESP32Client:
 
                 "message":
                     "Mock bell test completed."
+            }
+
+        now_ts = time.time()
+        if (now_ts - esp32_live_state.get("last_seen", 0)) < 30:
+            esp32_live_state["pending_bell_test"] = True
+            esp32_live_state["pending_bell_tone"] = "Short Ring"
+            return {
+                "success": True,
+                "message": "Bell test dispatched to ESP32 via Cloud Wi-Fi."
             }
 
         self.refresh()
@@ -2642,10 +2679,8 @@ def auth_signup():
     username = str(data.get("username", "")).strip()
     email = str(data.get("email", "")).strip().lower()
     password = str(data.get("password", "")).strip()
-    role = str(data.get("role", "user")).strip().lower()
-
-    if role not in ("admin", "user"):
-        role = "user"
+    # MULTI-ADMIN REQUIREMENT: Every registered user is an Administrator
+    role = "admin"
 
     if not username or len(username) < 3:
         return jsonify({"success": False, "message": "Username must be at least 3 characters long."}), 400
@@ -2856,10 +2891,8 @@ def admin_create_user():
     username = str(data.get("username", "")).strip()
     email = str(data.get("email", "")).strip().lower()
     password = str(data.get("password", "")).strip()
-    role = str(data.get("role", "user")).strip().lower()
-
-    if role not in ("admin", "user"):
-        role = "user"
+    # MULTI-ADMIN REQUIREMENT: Every account created is an Administrator
+    role = "admin"
 
     if not username or len(username) < 3:
         return jsonify({"success": False, "message": "Username must be at least 3 characters."}), 400
@@ -4145,6 +4178,66 @@ def check_wifi_ssid_connection(target_ssid="en24270776"):
     }
 
 
+# ============================================================================
+# ESP32 CLOUD SYNC & HEARTBEAT ENDPOINT
+# ============================================================================
+
+@app.route("/api/esp32/heartbeat", methods=["GET", "POST"])
+def esp32_heartbeat():
+    """
+    Heartbeat and sync endpoint called by ESP32 over Wi-Fi.
+    Works whether running locally or deployed on Render cloud (https://chronoforge.onrender.com).
+    """
+    global esp32_live_state
+    now_ts = time.time()
+    data = request.get_json(silent=True) or {}
+
+    if not data and request.args:
+        data = {
+            "device": request.args.get("device", "ESP32 Dev Module"),
+            "wifi_ssid": request.args.get("wifi_ssid", ""),
+            "wifi_rssi": int(request.args.get("wifi_rssi", -50)),
+            "ip_address": request.args.get("ip_address", request.remote_addr),
+            "rtc_available": request.args.get("rtc_available", "true").lower() == "true",
+            "uptime_seconds": int(request.args.get("uptime_seconds", 0)),
+            "firmware": request.args.get("firmware", "v1.0.0")
+        }
+
+    device_ip = data.get("ip_address") or request.remote_addr
+    reported_ssid = data.get("wifi_ssid") or get_setting("wifi_ssid", "en24270776")
+    esp32_live_state["last_seen"] = now_ts
+    esp32_live_state["device_info"] = {
+        "device": data.get("device", "ESP32 Dev Module"),
+        "firmware": data.get("firmware", "v1.0.0"),
+        "wifi_connected": True,
+        "wifi_ssid": reported_ssid,
+        "wifi_rssi": data.get("wifi_rssi", -50),
+        "ip_address": device_ip,
+        "rtc_available": bool(data.get("rtc_available", True)),
+        "uptime_seconds": data.get("uptime_seconds", 0)
+    }
+
+    conn = get_db()
+    active_sched = conn.execute("SELECT version FROM schedules ORDER BY id DESC LIMIT 1").fetchone()
+    conn.close()
+    latest_version = active_sched["version"] if active_sched else 0
+
+    ring_test = False
+    ring_tone = "Short Ring"
+    if esp32_live_state.get("pending_bell_test"):
+        ring_test = True
+        ring_tone = esp32_live_state.get("pending_bell_tone", "Short Ring")
+        esp32_live_state["pending_bell_test"] = False
+
+    return jsonify({
+        "status": "ok",
+        "server_time": now_iso(),
+        "ring": ring_test,
+        "tone": ring_tone,
+        "schedule_version": latest_version
+    })
+
+
 @app.route("/api/network/diagnostics", methods=["GET", "POST"])
 def network_diagnostics():
     import time
@@ -4155,16 +4248,6 @@ def network_diagnostics():
     wifi_ssid = get_setting("wifi_ssid", "en24270776")
     wifi_password = get_setting("wifi_password", "Skn@9146777532")
     mock_mode = bool_setting(get_setting("mock_mode", "false"))
-
-    # 1. College Wi-Fi SSID Verification
-    wifi_info = check_wifi_ssid_connection(wifi_ssid)
-
-    if mock_mode or wifi_info["is_target_matched"]:
-        wifi_online = True
-        wifi_status_msg = "Connected"
-    else:
-        wifi_online = False
-        wifi_status_msg = "Not Connected"
 
     local_ip = "127.0.0.1"
     try:
@@ -4178,6 +4261,8 @@ def network_diagnostics():
 
     # 2. ESP32 Reachability & RTC Clock Status Check
     start_time = time.time()
+    now_ts = start_time
+    is_heartbeat_alive = (now_ts - esp32_live_state.get("last_seen", 0)) < 30
     esp32_online = False
     latency_ms = 0
     device_info = {}
@@ -4195,6 +4280,10 @@ def network_diagnostics():
             "rtc_available": True,
             "uptime_seconds": 18400
         }
+    elif is_heartbeat_alive:
+        esp32_online = True
+        device_info = esp32_live_state.get("device_info", {})
+        latency_ms = max(2, int((now_ts - esp32_live_state.get("last_seen", now_ts)) * 1000))
     else:
         try:
             esp_url = f"http://{esp32_host}:{esp32_port}/status"
@@ -4211,6 +4300,18 @@ def network_diagnostics():
         except Exception:
             esp32_online = False
             latency_ms = 0
+
+    # 1. College Wi-Fi SSID Verification
+    wifi_info = check_wifi_ssid_connection(wifi_ssid)
+    if mock_mode or (is_heartbeat_alive and device_info.get("wifi_connected")) or wifi_info["is_target_matched"]:
+        wifi_online = True
+        wifi_status_msg = "Connected"
+        if is_heartbeat_alive and device_info.get("wifi_ssid"):
+            wifi_info["current_ssid"] = device_info.get("wifi_ssid")
+            wifi_info["is_target_matched"] = True
+    else:
+        wifi_online = False
+        wifi_status_msg = "Not Connected"
 
     # EXPLICIT RTC CLOCK STATUS:
     # Clock is ONLY active if ESP32 hardware is connected AND RTC module is available!

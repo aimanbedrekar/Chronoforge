@@ -44,12 +44,17 @@
 #include <Wire.h>
 #include <RTClib.h>
 #include <ArduinoJson.h>
+#include <HTTPClient.h>
 
 // ---------------------------------------------------------------------------
 // CONFIGURATION — edit these for your network / hardware
 // ---------------------------------------------------------------------------
+// Set your Wi-Fi SSID and Password here (e.g., Mechanical Department Wi-Fi)
 const char* WIFI_SSID     = "en24270776";
 const char* WIFI_PASSWORD = "Skn@9146777532";
+
+// Cloud Backend URL on Render (https://chronoforge.onrender.com)
+const char* BACKEND_SERVER = "https://chronoforge.onrender.com";
 
 const int   HTTP_PORT     = 80;     // must match ESP32_PORT in backend settings
 const int   RELAY_PIN     = 26;     // GPIO driving the relay module
@@ -57,8 +62,9 @@ const bool  RELAY_ACTIVE_HIGH = true; // set false if your relay module is activ
 
 const int   MAX_SCHEDULE_ITEMS = 40;
 const unsigned long RELAY_PULSE_MS = 1500; // how long a "Short Ring" stays on
+const unsigned long HEARTBEAT_INTERVAL_MS = 5000; // Cloud sync every 5 seconds
 
-const char* FIRMWARE_VERSION = "1.0.0";
+const char* FIRMWARE_VERSION = "1.1.0";
 
 // ---------------------------------------------------------------------------
 // Globals
@@ -256,6 +262,53 @@ void handleNotFound() {
 }
 
 // ---------------------------------------------------------------------------
+// Cloud Heartbeat & Sync Routine (Connects ESP32 to Render Backend)
+// ---------------------------------------------------------------------------
+unsigned long lastHeartbeatTime = 0;
+
+void sendHeartbeatToBackend() {
+  if (WiFi.status() != WL_CONNECTED) return;
+  if (millis() - lastHeartbeatTime < HEARTBEAT_INTERVAL_MS) return;
+  lastHeartbeatTime = millis();
+
+  HTTPClient http;
+  String url = String(BACKEND_SERVER) + "/api/esp32/heartbeat";
+  http.begin(url);
+  http.addHeader("Content-Type", "application/json");
+
+  StaticJsonDocument<256> doc;
+  doc["device"] = "ESP32 Dev Module";
+  doc["firmware"] = FIRMWARE_VERSION;
+  doc["wifi_ssid"] = WIFI_SSID;
+  doc["wifi_rssi"] = WiFi.RSSI();
+  doc["ip_address"] = WiFi.localIP().toString();
+  doc["rtc_available"] = rtcAvailable;
+  doc["uptime_seconds"] = millis() / 1000;
+
+  String jsonBody;
+  serializeJson(doc, jsonBody);
+
+  int httpCode = http.POST(jsonBody);
+  if (httpCode > 0) {
+    if (httpCode == HTTP_CODE_OK) {
+      String payload = http.getString();
+      DynamicJsonDocument resp(1024);
+      DeserializationError err = deserializeJson(resp, payload);
+      if (!err) {
+        if (resp["ring"] == true) {
+          const char* tone = resp["tone"] | "Short Ring";
+          Serial.printf("[ChronoForge Cloud] Bell trigger received: %s\n", tone);
+          ringBell(tone);
+        }
+      }
+    }
+  } else {
+    Serial.printf("[ChronoForge Cloud] Heartbeat failed, code: %d\n", httpCode);
+  }
+  http.end();
+}
+
+// ---------------------------------------------------------------------------
 // Setup
 // ---------------------------------------------------------------------------
 void setup() {
@@ -309,6 +362,11 @@ void setup() {
 // ---------------------------------------------------------------------------
 void loop() {
   server.handleClient();
+
+  // Cloud sync to Render backend
+  if (wifiConnected) {
+    sendHeartbeatToBackend();
+  }
 
   // Keep trying to reconnect Wi-Fi in the background without blocking bells.
   static unsigned long lastWifiAttempt = 0;
