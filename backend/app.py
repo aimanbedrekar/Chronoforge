@@ -181,10 +181,10 @@ def init_db():
                 "false",
 
             "wifi_ssid":
-                "en24270776",
+                "Mech",
 
             "wifi_password":
-                "Skn@9146777532"
+                "Mech@123"
         }
 
         for key, value in defaults.items():
@@ -200,6 +200,10 @@ def init_db():
                     value
                 )
             )
+
+        # Update Wi-Fi settings to Mechanical department network if still on old defaults
+        cursor.execute("UPDATE settings SET value = 'Mech' WHERE key = 'wifi_ssid' AND value = 'en24270776'")
+        cursor.execute("UPDATE settings SET value = 'Mech@123' WHERE key = 'wifi_password' AND value = 'Skn@9146777532'")
 
         # MULTI-ADMIN REQUIREMENT: All users in the system are Administrators
         cursor.execute("UPDATE users SET role = 'admin' WHERE role != 'admin'")
@@ -4025,13 +4029,13 @@ def get_settings():
         "wifi_ssid":
             get_setting(
                 "wifi_ssid",
-                "en24270776"
+                "Mech"
             ),
 
         "wifi_password":
             get_setting(
                 "wifi_password",
-                "Skn@9146777532"
+                "Mech@123"
             )
     }
 
@@ -4151,7 +4155,7 @@ def save_settings():
 # NETWORK DIAGNOSTICS ROUTE
 # ============================================================================
 
-def check_wifi_ssid_connection(target_ssid="en24270776"):
+def check_wifi_ssid_connection(target_ssid="Mech"):
     import subprocess
     current_ssid = None
     is_connected = False
@@ -4204,7 +4208,7 @@ def esp32_heartbeat():
         }
 
     device_ip = data.get("ip_address") or request.remote_addr
-    reported_ssid = data.get("wifi_ssid") or get_setting("wifi_ssid", "en24270776")
+    reported_ssid = data.get("wifi_ssid") or get_setting("wifi_ssid", "Mech")
     esp32_live_state["last_seen"] = now_ts
     esp32_live_state["device_info"] = {
         "device": data.get("device", "ESP32 Dev Module"),
@@ -4245,8 +4249,8 @@ def network_diagnostics():
 
     esp32_host = get_setting("esp32_host", "192.168.1.100")
     esp32_port = get_setting("esp32_port", "80")
-    wifi_ssid = get_setting("wifi_ssid", "en24270776")
-    wifi_password = get_setting("wifi_password", "Skn@9146777532")
+    wifi_ssid = get_setting("wifi_ssid", "Mech")
+    wifi_password = get_setting("wifi_password", "Mech@123")
     mock_mode = bool_setting(get_setting("mock_mode", "false"))
 
     local_ip = "127.0.0.1"

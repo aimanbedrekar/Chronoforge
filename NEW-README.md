@@ -11,7 +11,7 @@ This document explains the authentication system, role-based redirection logic, 
 
 ### **Task 2: Network Diagnostics & Wi-Fi Monitor**
 > *"Want to create a page or diagnostic like (ESP32 Offline) for network college wifi. One page to verify wifi is connected or not (network diagnostic). If connected to network show Network online, if not offline."*
-> **College Wi-Fi Credentials:** `SSID: en24270776` | `Password: Skn@9146777532`
+> **Mechanical Department Wi-Fi Credentials:** `SSID: Mech` | `Password: Mech@123`
 
 ---
 
@@ -145,17 +145,16 @@ Navigate to 👉 **`http://127.0.0.1:5000`**
 
 ### **A. How to Change Wi-Fi Credentials**
 1. **In Backend / Settings**: Open **Settings** on the website or edit `wifi_ssid` and `wifi_password` defaults in `backend/app.py` (~Line 180).
-2. **In ESP32 Firmware**: Open `esp32/chronoforge_esp32.ino` and edit lines 51-52:
+2. **In ESP32 Firmware**: Open `esp32/chronoforge_esp32.ino` and edit lines 53-54:
    ```cpp
-   const char* WIFI_SSID     = "en24270776";
-   const char* WIFI_PASSWORD = "Skn@9146777532";
+   const char* WIFI_SSID     = "Mech";
+   const char* WIFI_PASSWORD = "Mech@123";
    ```
 
 ### **B. How to Change Default Seed Passwords**
 Open `backend/app.py` and search for `init_db()`. Look for lines ~200-215:
 ```python
 admin_pw = generate_password_hash("YourNewAdminPassword")
-user_pw = generate_password_hash("YourNewUserPassword")
 ```
 > 💡 If you modify seed accounts, delete `backend/chronoforge.db` and restart `python app.py` to re-initialize with new seed data.
 
@@ -163,9 +162,9 @@ user_pw = generate_password_hash("YourNewUserPassword")
 
 ## 📄 File Sitemap
 
-- `backend/app.py` — Flask server, SQLite database, Auth & Diagnostics REST APIs.
-- `esp32/chronoforge_esp32.ino` — ESP32 firmware configured for Wi-Fi `en24270776`.
-- `frontend/index.html` — HTML containing Auth view, Diagnostics view (`#view-diagnostics`), Admin view, and Real Page views.
+- `backend/app.py` — Flask server, SQLite database, Multi-Admin Auth & Diagnostics REST APIs.
+- `esp32/chronoforge_esp32.ino` — ESP32 firmware configured for Wi-Fi `Mech` with Cloud Heartbeat.
+- `frontend/index.html` — HTML containing Auth view, Diagnostics view (`#view-diagnostics`), Multi-Admin view, and Real Page views.
 - `frontend/style.css` — Styling for Auth screen, Diagnostics hero banner, and Admin cards.
 - `frontend/script.js` — Frontend logic, real-time ping scanner, auto-scan timers, and role guards.
 - `NEW-README.md` — This documentation file.

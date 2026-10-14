@@ -50,8 +50,8 @@
 // CONFIGURATION — edit these for your network / hardware
 // ---------------------------------------------------------------------------
 // Set your Wi-Fi SSID and Password here (e.g., Mechanical Department Wi-Fi)
-const char* WIFI_SSID     = "en24270776";
-const char* WIFI_PASSWORD = "Skn@9146777532";
+const char* WIFI_SSID     = "Mech";
+const char* WIFI_PASSWORD = "Mech@123";
 
 // Cloud Backend URL on Render (https://chronoforge.onrender.com)
 const char* BACKEND_SERVER = "https://chronoforge.onrender.com";

@@ -4337,8 +4337,8 @@ async function loadNetworkDiagnostics() {
     }
 
     // Update College Wi-Fi Panel
-    if ($("#diagWifiSsid")) $("#diagWifiSsid").textContent = d.wifi_ssid || "en24270776";
-    updateWifiPassDisplay(d.wifi_password || "Skn@9146777532");
+    if ($("#diagWifiSsid")) $("#diagWifiSsid").textContent = d.wifi_ssid || "Mech";
+    updateWifiPassDisplay(d.wifi_password || "Mech@123");
     if ($("#diagLocalIp")) $("#diagLocalIp").textContent = d.local_ip || "127.0.0.1";
     if ($("#diagWifiStatusPill")) {
       const p = $("#diagWifiStatusPill");
