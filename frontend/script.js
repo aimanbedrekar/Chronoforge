@@ -3883,6 +3883,21 @@ if ($("#settingsForm")) {
 
 async function initAuth() {
   state.authToken = localStorage.getItem("cf_auth_token");
+  const cachedUserStr = localStorage.getItem("cf_user");
+  let cachedUser = null;
+  if (cachedUserStr) {
+    try { cachedUser = JSON.parse(cachedUserStr); } catch (e) {}
+  }
+
+  // Session persistence: Restore immediately so page refresh or desktop toggle NEVER logs out
+  if (state.authToken && cachedUser) {
+    updateUserUI(cachedUser);
+    const activeView = $(".view.active");
+    if (!activeView || activeView.id === "view-auth") {
+      setView("admindashboard");
+    }
+  }
+
   if (!state.authToken) {
     updateUserUI(null);
     setView("auth");
@@ -3892,20 +3907,22 @@ async function initAuth() {
   try {
     const result = await apiCall("/auth/me");
     if (result.success && result.data && result.data.user) {
+      localStorage.setItem("cf_user", JSON.stringify(result.data.user));
       updateUserUI(result.data.user);
       const activeView = $(".view.active");
       if (!activeView || activeView.id === "view-auth") {
-        if (result.data.user.role === "admin") {
-          setView("admindashboard");
-        } else {
-          setView("dashboard");
-        }
+        setView("admindashboard");
       }
     } else {
       logout(false);
     }
   } catch (err) {
-    logout(false);
+    // Only logout if server explicitly rejects token (401). If network glitch or Render cold start, keep user logged in!
+    if (err && err.message && (err.message.includes("401") || err.message.includes("Not authenticated"))) {
+      logout(false);
+    } else if (cachedUser) {
+      updateUserUI(cachedUser);
+    }
   }
 }
 
@@ -3963,6 +3980,7 @@ async function handleLogin(e) {
     if (result.success && result.data) {
       state.authToken = result.data.token;
       localStorage.setItem("cf_auth_token", result.data.token);
+      localStorage.setItem("cf_user", JSON.stringify(result.data.user));
       updateUserUI(result.data.user);
       toast(`Welcome back, ${result.data.user.username}!`, "success");
 
@@ -4001,6 +4019,7 @@ async function handleSignup(e) {
     if (result.success && result.data) {
       state.authToken = result.data.token;
       localStorage.setItem("cf_auth_token", result.data.token);
+      localStorage.setItem("cf_user", JSON.stringify(result.data.user));
       updateUserUI(result.data.user);
       toast(`Administrator account created! Logged in as ${result.data.user.username}.`, "success");
 
@@ -4020,6 +4039,7 @@ async function logout(notify = true) {
   }
   state.authToken = null;
   localStorage.removeItem("cf_auth_token");
+  localStorage.removeItem("cf_user");
   updateUserUI(null);
   setView("auth");
   if (notify) toast("Logged out successfully.", "info");
@@ -4339,7 +4359,7 @@ async function loadNetworkDiagnostics() {
     // Update College Wi-Fi Panel
     if ($("#diagWifiSsid")) $("#diagWifiSsid").textContent = d.wifi_ssid || "Mech";
     updateWifiPassDisplay(d.wifi_password || "Mech@123");
-    if ($("#diagLocalIp")) $("#diagLocalIp").textContent = d.local_ip || "127.0.0.1";
+    if ($("#diagLocalIp")) $("#diagLocalIp").textContent = d.local_ip || "172.20.100.254";
     if ($("#diagWifiStatusPill")) {
       const p = $("#diagWifiStatusPill");
       p.className = d.network_online ? "pill pill-good" : "pill pill-bad";
@@ -4347,7 +4367,7 @@ async function loadNetworkDiagnostics() {
     }
 
     // Update ESP32 Node Panel
-    if ($("#diagEspHost")) $("#diagEspHost").textContent = d.esp32_host || "192.168.1.100";
+    if ($("#diagEspHost")) $("#diagEspHost").textContent = d.esp32_host || "172.20.124.67";
     if ($("#diagEspPort")) $("#diagEspPort").textContent = `${d.esp32_port || "80"} (HTTP)`;
     if ($("#diagLatency")) $("#diagLatency").textContent = d.esp32_online ? `${d.latency_ms} ms` : "Timeout";
 

@@ -166,10 +166,13 @@ def init_db():
         defaults = {
 
             "esp32_host":
-                "192.168.1.100",
+                "172.20.124.67",
 
             "esp32_port":
                 "80",
+
+            "gateway_ip":
+                "172.20.100.254",
 
             "esp32_timeout_seconds":
                 "3",
@@ -204,6 +207,9 @@ def init_db():
         # Update Wi-Fi settings to Mechanical department network if still on old defaults
         cursor.execute("UPDATE settings SET value = 'Mech' WHERE key = 'wifi_ssid' AND value = 'en24270776'")
         cursor.execute("UPDATE settings SET value = 'Mech@123' WHERE key = 'wifi_password' AND value = 'Skn@9146777532'")
+        # Update ESP32 IP to College Mechanical lab assigned IP
+        cursor.execute("UPDATE settings SET value = '172.20.124.67' WHERE key = 'esp32_host' AND (value = '192.168.1.100' OR value = '10.138.103.234')")
+        cursor.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('gateway_ip', '172.20.100.254')")
 
         # MULTI-ADMIN REQUIREMENT: All users in the system are Administrators
         cursor.execute("UPDATE users SET role = 'admin' WHERE role != 'admin'")
@@ -2178,7 +2184,7 @@ class ESP32Client:
 
         self.host = get_setting(
             "esp32_host",
-            "192.168.1.100"
+            "172.20.124.67"
         )
 
         self.port = get_setting(
@@ -2847,7 +2853,7 @@ def admin_stats():
     conn.close()
 
     mock_mode = bool_setting(get_setting("mock_mode", "false"))
-    esp32_host = get_setting("esp32_host", "192.168.1.100")
+    esp32_host = get_setting("esp32_host", "172.20.124.67")
     esp32_port = get_setting("esp32_port", "80")
 
     return jsonify({
@@ -3999,7 +4005,7 @@ def get_settings():
         "esp32_host":
             get_setting(
                 "esp32_host",
-                "192.168.1.100"
+                "172.20.124.67"
             ),
 
         "esp32_port":
@@ -4247,21 +4253,26 @@ def network_diagnostics():
     import time
     import socket
 
-    esp32_host = get_setting("esp32_host", "192.168.1.100")
+    esp32_host = get_setting("esp32_host", "172.20.124.67")
     esp32_port = get_setting("esp32_port", "80")
     wifi_ssid = get_setting("wifi_ssid", "Mech")
     wifi_password = get_setting("wifi_password", "Mech@123")
     mock_mode = bool_setting(get_setting("mock_mode", "false"))
+    sophos_gateway = get_setting("gateway_ip", "172.20.100.254")
 
-    local_ip = "127.0.0.1"
+    local_ip = sophos_gateway
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.settimeout(1.2)
         s.connect(("8.8.8.8", 80))
-        local_ip = s.getsockname()[0]
+        detected_ip = s.getsockname()[0]
         s.close()
+        if detected_ip.startswith("172.") or detected_ip.startswith("192.168."):
+            local_ip = detected_ip
+        else:
+            local_ip = sophos_gateway
     except Exception:
-        pass
+        local_ip = sophos_gateway
 
     # 2. ESP32 Reachability & RTC Clock Status Check
     start_time = time.time()
